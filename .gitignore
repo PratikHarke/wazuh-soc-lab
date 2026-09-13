@@ -1,0 +1,37 @@
+# .gitignore for Wazuh SOC Lab
+
+# Never commit real credentials or keys
+*.key
+*.pem
+*.crt
+*.pfx
+auth_key.txt
+ossec.conf.bak
+
+# Never commit real IP addresses or agent IDs in standalone files
+# (they're fine inside documented config examples)
+secrets.txt
+credentials.txt
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor artifacts
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Log files (too large, sensitive)
+*.log
+*.evtx
+
+# Screenshots (add selectively with git add -f)
+# Remove this if you want to include screenshots
+# assets/*.png
+
+# Temp files
+*.tmp
+*.temp
