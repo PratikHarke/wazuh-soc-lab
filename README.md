@@ -178,7 +178,7 @@ Get-Service WazuhSvc, sysmon64
 ### Remediation Journey
 
 ```
-BEFORE (2026-09-05)                    AFTER
+BEFORE (2026-09-05)              AFTER (2026-09-19)
 ━━━━━━━━━━━━━━━━━━━━━━━         ━━━━━━━━━━━━━━━━━━━
 Critical:  3  ██████████        Critical:  0  ✅
 High:     58  ██████████        High:      0  ✅
