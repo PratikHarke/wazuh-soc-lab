@@ -6,8 +6,8 @@
 ![MITRE](https://img.shields.io/badge/MITRE_ATT%26CK-Mapped-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![CVEs](https://img.shields.io/badge/CVEs_Remediated-128+-critical?style=flat-square)
-![IRs](https://img.shields.io/badge/Incident_Reports-2-orange?style=flat-square)
-![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-4-red?style=flat-square)
+![IRs](https://img.shields.io/badge/Incident_Reports-4-orange?style=flat-square)
+![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-6-red?style=flat-square)
 
 > End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, and MITRE ATT&CK-mapped attack simulations on Windows 11 with documented incident reports.
 
@@ -20,9 +20,9 @@ Build a simulated Security Operations environment capable of:
 - Real-time endpoint monitoring and alerting (4,600+ events captured)
 - File Integrity Monitoring with MITRE-mapped registry coverage
 - Security Configuration Assessment against CIS Win11 Enterprise benchmarks
-- Vulnerability discovery, prioritization, and remediation (131 → 0 CVEs)
-- Attack simulation across 4 MITRE techniques with live detection validation
-- Incident investigation and structured response documentation
+- Vulnerability discovery, prioritization, and remediation (131 → ~0 CVEs)
+- Attack simulation across 6 MITRE techniques with live detection validation
+- Incident investigation and structured response documentation (4 IRs)
 
 ---
 
@@ -79,24 +79,25 @@ Build a simulated Security Operations environment capable of:
 | 1 | Agent "Never Connected" | Windows Firewall blocking TCP :1514 | Added outbound firewall rule |
 | 2 | `agent-auth.exe` not found | Agent installed to x86 path not x64 | Used `C:\Program Files (x86)\ossec-agent\agent-auth.exe` |
 | 3 | Incomplete MSI (5.9MB) | Broken download in TEMP | Re-downloaded via winget |
-| 4 | IP changes on every reboot | DHCP lease renewal | Static binding pending; SSH to current IP each session |
+| 4 | IP changes on every reboot | DHCP lease renewal | SSH to current IP each session |
 | 5 | `systemctl` Access Denied | Running as `wazuh-user` not root | `sudo su -` before any service commands |
 | 6 | Sysmon binary not in PATH | winget installed launcher only | Direct download from sysinternals.com |
 | 7 | EventID 4625 not generated | Windows audit policy disabled by default | `auditpol /set /subcategory:"Logon" /failure:enable` |
 | 8 | Dashboard API auth error | wazuh-manager not fully started | `systemctl restart wazuh-manager` + 60s wait |
+| 9 | Disk 100% full on reboot | `queue/vd` (11G) + `queue/vd_updater` (7.9G) filled `/dev/sda1` | Cleared queues; set `feed-update-interval` 60m → 24h; daily cleanup cron |
 
 ### Session Startup Checklist
 
 ```bash
-# SSH (every session)
+# SSH (every session — check IP first, DHCP may have changed)
 ssh wazuh-user@10.249.232.133
-sudo su -
-systemctl start wazuh-manager wazuh-indexer wazuh-dashboard
-systemctl is-active wazuh-manager wazuh-indexer wazuh-dashboard
+ip a s eth0
+sudo systemctl start wazuh-indexer wazuh-manager wazuh-dashboard
+sudo systemctl is-active wazuh-indexer wazuh-manager wazuh-dashboard
 ```
 
 ```powershell
-# Admin PowerShell (every session)
+# Admin PowerShell on Khonshu (every session)
 Start-Service WazuhSvc
 Get-Service WazuhSvc, sysmon64
 ```
@@ -168,7 +169,7 @@ Get-Service WazuhSvc, sysmon64
 | Interval | 12 hours |
 | Status | ✅ Active — results in dashboard |
 
-> Full CIS pass/fail breakdown pending — check `docs/sca-report.md`
+> Full CIS pass/fail breakdown: [`docs/sca-report.md`](docs/sca-report.md)
 
 ---
 
@@ -207,6 +208,8 @@ Total:   131                    Total:    ~0
 | CVE-2025-64459 | **9.1** | Django | SQL injection | ✅ Fixed |
 | CVE-2026-4277 | Critical | Django | Auth bypass (PoC public) | ✅ Fixed |
 
+> Full vulnerability lifecycle report: [`reports/vulnerability-management/`](reports/vulnerability-management/)
+
 ---
 
 ## 📡 Module 4 — Sysmon Integration
@@ -240,34 +243,34 @@ Total:   131                    Total:    ~0
 |---|---|---|---|---|---|---|---|---|
 | 1 | Brute Force | T1110 | ✅ | ✅ | Security EID4625 | 60204 | 10 | ✅ **CONFIRMED** |
 | 2 | PowerShell Execution | T1059.001 | ✅ | ✅ | Win EID4104 + Sysmon EID1 | MITRE chart | High | ✅ **CONFIRMED** |
-| 3 | Scheduled Task | T1053.005 | ✅ | 🔄 | TaskScheduler EID4698 | Audit policy pending | High | 🔄 Verifying |
-| 4 | Startup Persistence | T1547.001 | ✅ | ✅ | FIM realtime Rule 550 | 550 | 7 | ✅ **CONFIRMED** |
+| 3 | Scheduled Task | T1053.005 | ✅ | ✅ | TaskScheduler EID4698 + FIM Rule 750 | Sysmon EID1 + 750 | High | ✅ **CONFIRMED** |
+| 4 | Startup Persistence | T1547.001 | ✅ | ✅ | FIM realtime Rule 550 + Sysmon EID11 | 550, EID11/13 | 7 | ✅ **CONFIRMED** |
 | 5 | Registry Modification | T1112 | ✅ | ✅ | Wazuh registry monitor Rule 750 | 750 | 5 | ✅ **CONFIRMED** |
 | 6 | File Integrity | T1565 | ✅ | ✅ | FIM realtime Rule 550 | 550 | 7 | ✅ **CONFIRMED** |
 | 7 | Account Discovery | T1087 | ⬜ | ⬜ | Sysmon + Security | TBD | Low | ⬜ Planned |
 | 8 | Credential Dumping | T1003 | ⬜ | ⬜ | Sysmon EID10 | TBD | High | ⬜ Planned |
 
-**Confirmed: 5/8 techniques detected | In Progress: 1 | Planned: 2**
+**Confirmed: 6/8 techniques detected | Planned: 2**
 
 ### Simulation Scripts
 
 | Script | Technique | Method | Status |
 |---|---|---|---|
-| `scripts/sim-bruteforce.ps1` | T1110 | `net use \\localhost\IPC$` | ✅ Done |
-| `scripts/sim-powershell.ps1` | T1059.001 | `-EncodedCommand` + `-ExecutionPolicy Bypass` | ✅ Done |
-| `scripts/sim-persistence.ps1` | T1053.005 | `schtasks /create /ru SYSTEM` | ✅ Done |
-| `scripts/sim-startup.ps1` | T1547.001 | Startup folder drop + Run key | ✅ Done |
+| [`scripts/sim-bruteforce.ps1`](scripts/sim-bruteforce.ps1) | T1110 | `net use \\localhost\IPC$` | ✅ Done |
+| [`scripts/sim-powershell.ps1`](scripts/sim-powershell.ps1) | T1059.001 | `-EncodedCommand` + `-ExecutionPolicy Bypass` | ✅ Done |
+| [`scripts/sim-persistence.ps1`](scripts/sim-persistence.ps1) | T1053.005 | `schtasks /create /ru SYSTEM /sc ONLOGON` | ✅ Done |
+| [`scripts/sim-startup.ps1`](scripts/sim-startup.ps1) | T1547.001 | Startup folder drop + Run key (dual vector) | ✅ Done |
 
 ---
 
 ## 📋 Incident Reports
 
-| ID | Date | Technique | ID | Rules Fired | Status |
+| ID | Date | Technique | MITRE ID | Rules Fired | Status |
 |---|---|---|---|---|---|
 | [IR-2026-09-12-001](incidents/IR-2026-09-12-001.md) | 2026-09-12 | Brute Force | T1110 | 60122, 60204 | ✅ Closed |
-| [IR-2026-09-13-002](incidents/IR-2026-09-13-002.md) | 2026-09-13 | PowerShell | T1059.001 | EID4104 + MITRE | ✅ Closed |
-| IR-2026-09-13-003 | 2026-09-13 | Scheduled Task | T1053.005 | EID4698 | 🔄 Pending |
-| IR-2026-09-13-004 | 2026-09-13 | Startup Persistence | T1547.001 | Rule 550 | 🔄 Pending |
+| [IR-2026-09-13-002](incidents/IR-2026-09-13-002.md) | 2026-09-13 | PowerShell Execution | T1059.001 | EID4104 + Sysmon EID1 | ✅ Closed |
+| [IR-2026-09-19-003](incidents/IR-2026-09-19-003.md) | 2026-09-19 | Scheduled Task Persistence | T1053.005 | Sysmon EID1 + FIM 750 + EID4698 | ✅ Closed |
+| [IR-2026-09-19-004](incidents/IR-2026-09-19-004.md) | 2026-09-19 | Startup Folder Persistence | T1547.001 | FIM 550 + FIM 750 + Sysmon EID11/13 | ✅ Closed |
 
 ---
 
@@ -276,28 +279,39 @@ Total:   131                    Total:    ~0
 ```
 wazuh-soc-lab/
 │
-├── README.md                    ← This file
+├── README.md                          ← This file
+├── future.md                          ← Planned phases and expansion roadmap
 │
 ├── config/
-│   ├── ossec.conf               ← Hardened agent config (live)
-│   └── sysmon-config.xml        ← SwiftOnSecurity ruleset v4.91
+│   ├── ossec.conf                     ← Hardened agent config (live)
+│   └── sysmon-config.xml              ← SwiftOnSecurity ruleset v4.91
 │
 ├── docs/
-│   ├── deployment.md            ← Full reproduction guide + troubleshooting
-│   ├── vuln-management.md       ← CVE remediation report (131 → 0)
-│   ├── sca-report.md            ← CIS Win11 benchmark template
-│   └── github-setup.md          ← Git workflow and commit strategy
+│   ├── deployment.md                  ← Full reproduction guide + troubleshooting
+│   ├── vuln-management.md             ← CVE remediation summary
+│   ├── sca-report.md                  ← CIS Win11 benchmark results
+│   └── github-setup.md                ← Git workflow and commit strategy
+│
+├── reports/
+│   └── vulnerability-management/
+│       ├── initial-assessment.md      ← Baseline: 131 CVEs, severity breakdown
+│       ├── critical-findings.md       ← Deep-dive on Critical/High CVEs
+│       ├── remediation-log.md         ← Package-by-package remediation log
+│       ├── verification-results.md    ← Post-remediation rescan results
+│       └── final-assessment.md        ← Before/after comparison + metrics
 │
 ├── scripts/
-│   ├── sim-bruteforce.ps1       ← T1110 simulation
-│   ├── sim-powershell.ps1       ← T1059.001 simulation
-│   ├── sim-persistence.ps1      ← T1053.005 simulation
-│   └── sim-startup.ps1          ← T1547.001 simulation
+│   ├── sim-bruteforce.ps1             ← T1110 simulation
+│   ├── sim-powershell.ps1             ← T1059.001 simulation
+│   ├── sim-persistence.ps1            ← T1053.005 simulation
+│   └── sim-startup.ps1                ← T1547.001 simulation
 │
 └── incidents/
-    ├── IR-TEMPLATE.md           ← Standard IR template
-    ├── IR-2026-09-12-001.md     ← T1110 Brute Force ✅
-    └── IR-2026-09-13-002.md     ← T1059.001 PowerShell ✅
+    ├── IR-TEMPLATE.md                 ← Standard IR template
+    ├── IR-2026-09-12-001.md           ← T1110 Brute Force ✅
+    ├── IR-2026-09-13-002.md           ← T1059.001 PowerShell ✅
+    ├── IR-2026-09-19-003.md           ← T1053.005 Scheduled Task ✅
+    └── IR-2026-09-19-004.md           ← T1547.001 Startup Persistence ✅
 ```
 
 ---
@@ -314,9 +328,9 @@ wazuh-soc-lab/
 | CVEs remediated | **128 (98.5%)** |
 | FIM realtime paths | **8** |
 | Registry keys monitored | **20+** |
-| MITRE techniques simulated | **4** |
-| MITRE techniques confirmed | **5** |
-| Incident reports written | **2** |
+| MITRE techniques simulated | **6** |
+| MITRE techniques confirmed | **6** |
+| Incident reports written | **4** |
 | Sysmon event types active | **10** |
 
 ---
@@ -330,36 +344,37 @@ wazuh-soc-lab/
 
 ### ✅ Phase 1 — Monitoring Configuration
 - [x] FIM hardened — 8 realtime paths, 5-min scans
-- [x] MITRE-mapped registry monitoring
+- [x] MITRE-mapped registry monitoring (20+ keys)
 - [x] Extended telemetry (PowerShell, Defender, TaskScheduler)
 - [x] SCA running — CIS Win11 Enterprise
 - [x] Sysmon 15.21 with SwiftOnSecurity config
 
 ### 🔄 Phase 2 — Vulnerability Management
-- [x] 131 CVEs discovered
+- [x] 131 CVEs discovered and baselined
 - [x] Django 5.2.17 — 128 CVEs cleared
 - [x] VLC 3.0.23 — CVE-2023-47359 CVSS 9.8 cleared
+- [x] Full vuln lifecycle report written (5 documents)
 - [ ] WinRAR 7.x upgrade pending
 - [ ] Python 3.11.9 + 3.13.1 upgrades pending
 
-### 🔄 Phase 3 — Attack Simulation
+### ✅ Phase 3 — Attack Simulation
 - [x] T1110 Brute Force — confirmed ✅
 - [x] T1059.001 PowerShell — confirmed ✅
 - [x] T1547.001 Startup Persistence — confirmed ✅
 - [x] T1112 Registry Modification — confirmed ✅
-- [ ] T1053.005 Scheduled Task — audit policy fix needed
-- [ ] IR-003 and IR-004 pending
+- [x] T1053.005 Scheduled Task — confirmed ✅
+- [x] IR-001 through IR-004 written and pushed ✅
 
 ### ⬜ Phase 4 — SOC Operations
-- [ ] 5 threat hunting hypotheses
+- [ ] 5 threat hunting hypotheses documented
 - [ ] Alert tuning and false positive testing
-- [ ] Custom Wazuh detection rules
-- [ ] SCA pass/fail detailed report
+- [ ] Custom Wazuh detection rules (`local_rules.xml`)
+- [ ] SCA detailed pass/fail breakdown
 
 ### ⬜ Phase 5 — Enterprise Expansion
-- [ ] Linux endpoint (Ubuntu) added
+- [ ] Linux endpoint (Ubuntu) added as second agent
 - [ ] Kali attacker VM — purple team scenarios
-- [ ] SSH brute force on Linux
+- [ ] SSH brute force detection on Linux
 - [ ] Sigma rule detection engineering
 
 ---
@@ -383,4 +398,4 @@ HackerOne: `on3_r4gn4r` | Bugcrowd: `r4gn4r`
 
 ---
 
-*Last updated: 2026-09-14 | Active Development*
+*Last updated: 2026-09-19 | Active Development*
