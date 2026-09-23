@@ -1,8 +1,8 @@
 # =============================================================
 # Simulation: Malicious PowerShell Execution (T1059.001)
-# Lab:        Wazuh SOC Lab — Khonshu (Windows 11)
+# Lab:        Wazuh SOC Lab â€” Khonshu (Windows 11)
 # Author:     Pratik (on3_r4gn4r)
-# MITRE:      T1059.001 — Command and Scripting: PowerShell
+# MITRE:      T1059.001 â€” Command and Scripting: PowerShell
 # Expected:   Sysmon EID1 | Windows EID4104 (Script Block Logging)
 # =============================================================
 # DISCLAIMER: Run only in your own lab. Never on unauthorized systems.
@@ -13,7 +13,7 @@ Write-Host ""
 
 # --- Simulation 1: EncodedCommand flag (most common malware pattern) ---
 Write-Host "[*] Sim 1: Encoded command execution" -ForegroundColor Yellow
-$command = "Write-Host 'Simulated C2 beacon — lab test only — $(Get-Date)'"
+$command = "Write-Host 'Simulated C2 beacon â€” lab test only â€” $(Get-Date)'"
 $encoded = [Convert]::ToBase64String(
     [System.Text.Encoding]::Unicode.GetBytes($command)
 )
@@ -27,7 +27,7 @@ Start-Sleep -Seconds 2
 # --- Simulation 2: Suspicious flags (NoProfile, Bypass, Hidden) ---
 Write-Host "[*] Sim 2: Suspicious execution flags" -ForegroundColor Yellow
 powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden `
-    -Command "Write-Host 'Simulated download cradle pattern — lab test only'"
+    -Command "Write-Host 'Simulated download cradle pattern â€” lab test only'"
 Write-Host "  [+] Sysmon EID1 should capture -ExecutionPolicy Bypass flag" -ForegroundColor Green
 Write-Host ""
 
@@ -35,15 +35,15 @@ Start-Sleep -Seconds 2
 
 # --- Simulation 3: IEX-style execution (common in payloads) ---
 Write-Host "[*] Sim 3: IEX pattern simulation" -ForegroundColor Yellow
-$fakePayload = "Write-Host 'Simulated IEX stager — lab test only'"
+$fakePayload = "Write-Host 'Simulated IEX stager â€” lab test only'"
 Invoke-Expression $fakePayload
 Write-Host "  [+] EID4104 script block logging should capture Invoke-Expression" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "[!] Check Wazuh Dashboard:" -ForegroundColor Magenta
-Write-Host "    Threat Hunting → Events" -ForegroundColor White
+Write-Host "    Threat Hunting â†’ Events" -ForegroundColor White
 Write-Host "    Filter: data.win.system.channel:Microsoft-Windows-Sysmon/Operational" -ForegroundColor White
 Write-Host "    Filter: data.win.eventdata.commandLine:*EncodedCommand*" -ForegroundColor White
 Write-Host "    Filter: data.win.system.eventID:4104" -ForegroundColor White
 Write-Host ""
-Write-Host "[!] Document in MITRE matrix: T1059.001 — PowerShell" -ForegroundColor Magenta
+Write-Host "[!] Document in MITRE matrix: T1059.001 â€” PowerShell" -ForegroundColor Magenta

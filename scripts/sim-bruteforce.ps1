@@ -1,9 +1,9 @@
 # =============================================================
 # Simulation: Brute Force Authentication (T1110)
-# Lab:        Wazuh SOC Lab — Khonshu (Windows 11)
+# Lab:        Wazuh SOC Lab â€” Khonshu (Windows 11)
 # Author:     Pratik (on3_r4gn4r)
 # Date:       2026-09-05
-# MITRE:      T1110 — Brute Force
+# MITRE:      T1110 â€” Brute Force
 # Expected:   Wazuh Rule 18152 | Security EventID 4625
 # =============================================================
 # DISCLAIMER: Run only in your own lab. Never on unauthorized systems.
@@ -38,8 +38,8 @@ Write-Host "[+] Simulation complete: $endtime" -ForegroundColor Green
 Write-Host "[+] Failed attempts generated: $attempts" -ForegroundColor Green
 Write-Host ""
 Write-Host "[!] Check Wazuh Dashboard:" -ForegroundColor Magenta
-Write-Host "    Threat Hunting → Events" -ForegroundColor White
+Write-Host "    Threat Hunting â†’ Events" -ForegroundColor White
 Write-Host "    Filter: rule.id:18152" -ForegroundColor White
 Write-Host "    Filter: data.win.system.eventID:4625" -ForegroundColor White
 Write-Host ""
-Write-Host "[!] Document in MITRE matrix: T1110 — Brute Force" -ForegroundColor Magenta
+Write-Host "[!] Document in MITRE matrix: T1110 â€” Brute Force" -ForegroundColor Magenta

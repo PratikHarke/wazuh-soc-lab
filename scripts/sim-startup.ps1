@@ -1,8 +1,8 @@
 # =============================================================
 # Simulation: Startup Folder Persistence (T1547.001)
-# Lab:        Wazuh SOC Lab — Khonshu (Windows 11)
+# Lab:        Wazuh SOC Lab â€” Khonshu (Windows 11)
 # Author:     Pratik (on3_r4gn4r)
-# MITRE:      T1547.001 — Boot or Logon Autostart: Registry Run Keys / Startup Folder
+# MITRE:      T1547.001 â€” Boot or Logon Autostart: Registry Run Keys / Startup Folder
 # Expected:   FIM realtime alert (immediate) | Sysmon EID11 (FileCreate)
 # =============================================================
 # DISCLAIMER: Run only in your own lab. Never on unauthorized systems.
@@ -27,7 +27,7 @@ Write-Host "  [+] Creating at: $timestamp" -ForegroundColor DarkGray
 New-Item -Path $testFile -ItemType File `
   -Value "@echo off`r`necho lab-test-payload`r`n" -Force | Out-Null
 
-Write-Host "  [+] File created — FIM realtime alert should fire within seconds" -ForegroundColor Green
+Write-Host "  [+] File created â€” FIM realtime alert should fire within seconds" -ForegroundColor Green
 Write-Host "  [+] Sysmon EID11 (FileCreate) should fire too" -ForegroundColor Green
 Write-Host ""
 Write-Host "  [*] Waiting 15 seconds for detection capture..." -ForegroundColor Yellow
@@ -35,7 +35,7 @@ Start-Sleep -Seconds 15
 
 # Clean up Method 1
 Remove-Item $testFile -Force -ErrorAction SilentlyContinue
-Write-Host "  [+] File removed — FIM delete alert should fire" -ForegroundColor Green
+Write-Host "  [+] File removed â€” FIM delete alert should fire" -ForegroundColor Green
 Write-Host ""
 
 Start-Sleep -Seconds 3
@@ -52,7 +52,7 @@ Write-Host "  [+] Key: $regPath\$regName" -ForegroundColor DarkGray
 New-ItemProperty -Path $regPath -Name $regName -Value $regValue `
   -PropertyType String -Force | Out-Null
 
-Write-Host "  [+] Registry key added — Wazuh registry monitor should alert" -ForegroundColor Green
+Write-Host "  [+] Registry key added â€” Wazuh registry monitor should alert" -ForegroundColor Green
 Write-Host "  [*] Waiting 10 seconds..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
 
@@ -65,10 +65,10 @@ $endtime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 Write-Host "[+] Simulation complete: $endtime" -ForegroundColor Green
 Write-Host ""
 Write-Host "[!] Check Wazuh Dashboard:" -ForegroundColor Magenta
-Write-Host "    Endpoint Security → File Integrity Monitoring" -ForegroundColor White
+Write-Host "    Endpoint Security â†’ File Integrity Monitoring" -ForegroundColor White
 Write-Host "    Filter: syscheck.path:*Startup*" -ForegroundColor White
 Write-Host "    Filter: syscheck.path:*CurrentVersion\Run*" -ForegroundColor White
-Write-Host "    Threat Hunting → Events" -ForegroundColor White
+Write-Host "    Threat Hunting â†’ Events" -ForegroundColor White
 Write-Host "    Filter: data.win.system.channel:Microsoft-Windows-Sysmon/Operational AND data.win.system.eventID:11" -ForegroundColor White
 Write-Host ""
-Write-Host "[!] Document in MITRE matrix: T1547.001 — Startup Persistence" -ForegroundColor Magenta
+Write-Host "[!] Document in MITRE matrix: T1547.001 â€” Startup Persistence" -ForegroundColor Magenta
