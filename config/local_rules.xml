@@ -1,31 +1,48 @@
-﻿<!-- Local custom rules - Pratik / wazuh-soc-lab -->
-<group name="local,custom,mitre">
+<!-- Wazuh Custom Detection Rules — Wazuh SOC Lab -->
+<!-- Pratik Harke | github.com/PratikHarke/wazuh-soc-lab -->
 
+<group name="local,soc-lab,">
+
+  <!-- T1053.005 — Scheduled Task/Job: Scheduled Task (Windows) -->
   <rule id="100001" level="12">
-    <if_group>sysmon_event1</if_group>
-    <field name="win.eventdata.image" type="pcre2">(?i)schtasks.exe</field>
-    <field name="win.eventdata.commandLine" type="pcre2">(?i)/ru\s+SYSTEM</field>
-    <description>T1053.005 - schtasks.exe creating SYSTEM-level scheduled task</description>
-    <mitre><id>T1053.005</id></mitre>
-    <group>persistence,privilege_escalation,</group>
+    <if_sid>61603</if_sid>
+    <description>T1053.005 - Scheduled Task created via schtasks.exe</description>
+    <mitre>
+      <id>T1053.005</id>
+    </mitre>
+    <group>persistence,scheduled_task,</group>
   </rule>
 
-  <rule id="100002" level="10">
-    <if_group>sysmon_event1</if_group>
-    <field name="win.eventdata.image" type="pcre2">(?i)powershell.exe</field>
-    <field name="win.eventdata.commandLine" type="pcre2">(?i)(-EncodedCommand|-ExecutionPolicy\s+Bypass)</field>
-    <description>T1059.001 - PowerShell obfuscation flags detected</description>
-    <mitre><id>T1059.001</id></mitre>
-    <group>execution,defense_evasion,</group>
+  <!-- T1059.001 — Command and Scripting Interpreter: PowerShell -->
+  <rule id="100002" level="12">
+    <if_sid>91802</if_sid>
+    <field name="win.eventdata.scriptBlockText" type="pcre2">(?i)(invoke-expression|iex|downloadstring|encodedcommand|-enc)</field>
+    <description>T1059.001 - Suspicious PowerShell script block execution detected</description>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+    <group>execution,powershell,</group>
   </rule>
 
+  <!-- T1547.001 — Boot or Logon Autostart: Registry Run Keys -->
   <rule id="100003" level="12">
-    <if_group>sysmon</if_group>
-    <field name="win.system.eventID">^11$</field>
-    <field name="win.eventdata.targetFilename" type="pcre2">(?i)Startup</field>
-    <description>T1547.001 - File created in Startup folder</description>
-    <mitre><id>T1547.001</id></mitre>
-    <group>persistence,</group>
+    <if_sid>61604</if_sid>
+    <field name="win.eventdata.targetObject" type="pcre2">(?i)(\\CurrentVersion\\Run|\\CurrentVersion\\RunOnce)</field>
+    <description>T1547.001 - Registry Run Key persistence mechanism detected</description>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+    <group>persistence,registry,</group>
+  </rule>
+
+  <!-- T1110 — Brute Force: SSH (Linux endpoint) -->
+  <rule id="100004" level="12">
+    <if_matched_sid>2502</if_matched_sid>
+    <description>T1110 - SSH Brute Force detected on Linux endpoint</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failures,brute_force,</group>
   </rule>
 
 </group>
