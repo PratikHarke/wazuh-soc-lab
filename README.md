@@ -1,15 +1,17 @@
 # 🛡️ Wazuh SOC & Vulnerability Management Lab
 
 ![Wazuh](https://img.shields.io/badge/Wazuh-4.14.7-blue?style=flat-square)
-![Windows](https://img.shields.io/badge/Windows_11-Agent-0078D6?style=flat-square)
+![Windows](https://img.shields.io/badge/Windows_11-Agent_002-0078D6?style=flat-square)
+![Kali](https://img.shields.io/badge/Kali_Linux-Agent_004-557C94?style=flat-square)
 ![Sysmon](https://img.shields.io/badge/Sysmon-15.21-important?style=flat-square)
 ![MITRE](https://img.shields.io/badge/MITRE_ATT%26CK-Mapped-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![CVEs](https://img.shields.io/badge/CVEs_Remediated-128+-critical?style=flat-square)
-![IRs](https://img.shields.io/badge/Incident_Reports-4-orange?style=flat-square)
-![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-6-red?style=flat-square)
+![IRs](https://img.shields.io/badge/Incident_Reports-5-orange?style=flat-square)
+![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-7-red?style=flat-square)
+![Custom Rules](https://img.shields.io/badge/Custom_Rules-4-blueviolet?style=flat-square)
 
-> End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, and MITRE ATT&CK-mapped attack simulations on Windows 11 with documented incident reports.
+> End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, MITRE ATT&CK-mapped attack simulations across Windows 11 and Kali Linux endpoints, custom detection rules, threat hunting, and structured incident response documentation.
 
 ---
 
@@ -17,42 +19,45 @@
 
 Build a simulated Security Operations environment capable of:
 
-- Real-time endpoint monitoring and alerting (4,600+ events captured)
+- Real-time endpoint monitoring and alerting across Windows and Linux (4,600+ events captured)
 - File Integrity Monitoring with MITRE-mapped registry coverage
-- Security Configuration Assessment against CIS Win11 Enterprise benchmarks
+- Security Configuration Assessment against CIS benchmarks (Windows 11 + Linux)
 - Vulnerability discovery, prioritization, and remediation (131 → ~0 CVEs)
-- Attack simulation across 6 MITRE techniques with live detection validation
-- Incident investigation and structured response documentation (4 IRs)
+- Attack simulation across 7 MITRE techniques with live detection validation
+- Custom Wazuh detection rules mapped to MITRE ATT&CK (4 rules, 100001–100004)
+- Proactive threat hunting with documented hypotheses (6 total, 3 confirmed)
+- Incident investigation and structured response documentation (5 IRs)
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────┐
-│      Windows 11 — Khonshu       │
-│                                  │
-│  ┌──────────────────────────┐   │
-│  │      Sysmon v15.21       │   │
-│  │  SwiftOnSecurity config  │   │
-│  │  Process / Net / Reg     │   │
-│  └────────────┬─────────────┘   │
-│               │                  │
-│  ┌────────────▼─────────────┐   │
-│  │   Wazuh Agent v4.14.7    │   │
-│  │   C:\Prog Files(x86)\    │   │
-│  │   ossec-agent\           │   │
-│  └────────────┬─────────────┘   │
-└───────────────┼─────────────────┘
-                │ TCP :1514 AES
-┌───────────────▼─────────────────┐
-│    Wazuh Server OVA v4.14.7     │
-│    VirtualBox — 10.249.232.133  │
-│                                  │
-│  wazuh-manager  :55000           │
-│  wazuh-indexer  :9200            │
-│  wazuh-dashboard :443            │
-└─────────────────────────────────┘
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│      Windows 11 — Khonshu       │    │      Kali Linux — kali          │
+│                                  │    │                                  │
+│  ┌──────────────────────────┐   │    │  ┌──────────────────────────┐   │
+│  │      Sysmon v15.21       │   │    │  │   auditd 4.1.2           │   │
+│  │  SwiftOnSecurity config  │   │    │  │   rsyslog + auth.log     │   │
+│  │  Process / Net / Reg     │   │    │  │   SSH daemon             │   │
+│  └────────────┬─────────────┘   │    │  └────────────┬─────────────┘   │
+│               │                  │    │               │                  │
+│  ┌────────────▼─────────────┐   │    │  ┌────────────▼─────────────┐   │
+│  │   Wazuh Agent v4.14.7    │   │    │  │   Wazuh Agent v4.14.8    │   │
+│  │   Agent ID: 002          │   │    │  │   Agent ID: 004          │   │
+│  └────────────┬─────────────┘   │    │  └────────────┬─────────────┘   │
+└───────────────┼─────────────────┘    └───────────────┼─────────────────┘
+                │ TCP :1514 AES                         │ TCP :1514 AES
+                └───────────────────┬───────────────────┘
+                        ┌───────────▼─────────────┐
+                        │    Wazuh Server OVA      │
+                        │    v4.14.7 — VirtualBox  │
+                        │    10.249.232.133         │
+                        │                           │
+                        │  wazuh-manager  :55000    │
+                        │  wazuh-indexer  :9200     │
+                        │  wazuh-dashboard :443     │
+                        └───────────────────────────┘
 ```
 
 ---
@@ -62,13 +67,14 @@ Build a simulated Security Operations environment capable of:
 | Component | Detail |
 |---|---|
 | **Wazuh Server** | OVA v4.14.7 on Oracle VirtualBox |
-| **Server IP** | 10.249.232.133 (DHCP) |
-| **Windows Endpoint** | Windows 11 Home — Hostname: `Khonshu` |
-| **Agent ID** | 002 |
-| **Agent Path** | `C:\Program Files (x86)\ossec-agent\` |
+| **Server IP** | 10.249.232.133 (bridged adapter) |
+| **Windows Endpoint** | Windows 11 Home — Hostname: `Khonshu` (Agent 002) |
+| **Linux Endpoint** | Kali Linux — Hostname: `kali` (Agent 004, IP: 10.249.232.161) |
 | **Communication** | TCP :1514, AES encrypted |
 | **Sysmon** | v15.21 — SwiftOnSecurity config schema 4.91 |
-| **SCA Policy** | CIS Windows 11 Enterprise |
+| **auditd** | v4.1.2 — custom rules for privilege escalation, passwd, sshd config |
+| **SCA Policies** | CIS Windows 11 Enterprise + CIS Distribution Independent Linux |
+| **Custom Rules** | 4 rules (100001–100004), all MITRE-mapped |
 
 ---
 
@@ -85,15 +91,21 @@ Build a simulated Security Operations environment capable of:
 | 7 | EventID 4625 not generated | Windows audit policy disabled by default | `auditpol /set /subcategory:"Logon" /failure:enable` |
 | 8 | Dashboard API auth error | wazuh-manager not fully started | `systemctl restart wazuh-manager` + 60s wait |
 | 9 | Disk 100% full on reboot | `queue/vd` (11G) + `queue/vd_updater` (7.9G) filled `/dev/sda1` | Cleared queues; set `feed-update-interval` 60m → 24h; daily cleanup cron |
+| 10 | Kali agent stuck Pending | GPG key import failed without sudo; `sqv` incompatibility | Used `--dearmor` method; wiped stale client.keys; re-enrolled |
+| 11 | ossec.conf corrupted | `sed` inserted literal `\n` breaking XML structure | Rewrote config from scratch using Python |
+| 12 | Kali no IPv4 (network unreachable) | Adapter set to plain NAT instead of Bridged | Changed to Bridged Adapter (MediaTek Wi-Fi 6 MT7921) |
+| 13 | auth.log missing on Kali | Kali uses journald only — no rsyslog by default | Installed rsyslog; created /etc/rsyslog.d/50-auth.conf |
 
 ### Session Startup Checklist
 
 ```bash
-# SSH (every session — check IP first, DHCP may have changed)
+# SSH to Wazuh server (every session — DHCP may change IP)
 ssh wazuh-user@10.249.232.133
-ip a s eth0
 sudo systemctl start wazuh-indexer wazuh-manager wazuh-dashboard
 sudo systemctl is-active wazuh-indexer wazuh-manager wazuh-dashboard
+
+# Verify agents
+sudo /var/ossec/bin/agent_control -l
 ```
 
 ```powershell
@@ -142,32 +154,14 @@ Get-Service WazuhSvc, sysmon64
 | `CurrentControlSet\Services` | T1543.003 |
 | `KnownDLLs` | T1574.001 |
 
-### Confirmed Live Detections
-
-| Rule | Description | Level | Status |
-|---|---|---|---|
-| **550** | Integrity checksum changed | 7 | ✅ Firing |
-| **750** | Registry Value Integrity Checksum Changed | 5 | ✅ Firing |
-
-### Extended Windows Telemetry Added
-
-| Log | EventIDs | Coverage |
-|---|---|---|
-| PowerShell Operational | 4103, 4104 | Script block, obfuscated commands |
-| Windows Defender | All | Malware, quarantine |
-| Task Scheduler | All | T1053.005 persistence |
-| Sysmon Operational | All | Process, network, DLL, registry |
-
 ---
 
 ## 🔒 Module 2 — Security Configuration Assessment (SCA)
 
-| Setting | Value |
-|---|---|
-| Policy | CIS Windows 11 Enterprise |
-| Scan on start | Yes |
-| Interval | 12 hours |
-| Status | ✅ Active — results in dashboard |
+| Endpoint | Policy | Hits | Status |
+|---|---|---|---|
+| Khonshu (Windows) | CIS Windows 11 Enterprise | — | ✅ Active |
+| kali (Linux) | CIS Distribution Independent Linux | **392** | ✅ Active |
 
 > Full CIS pass/fail breakdown: [`docs/sca-report.md`](docs/sca-report.md)
 
@@ -189,17 +183,6 @@ Total:   131                    Total:    ~0
                     Remediation Rate: ~98.5%
 ```
 
-### Package Status
-
-| Package | Before | After | CVEs Fixed |
-|---|---|---|---|
-| Django | old | **5.2.17** | 28 (incl. CVSS 9.1 SQLi) ✅ |
-| VLC | 3.0.10 | **3.0.23** | CVE-2023-47359 CVSS 9.8 RCE ✅ |
-| WinRAR 5.40 beta | — | 7.x pending | 11 CVEs incl. CVE-2023-38831 ⏳ |
-| Python 3.11.9 | — | pending | 15 CVEs ⏳ |
-| Python 3.13.1 | — | pending | 13 CVEs ⏳ |
-| pip | — | pending | 10 CVEs ⏳ |
-
 ### Critical CVEs Patched
 
 | CVE | CVSS | Package | Type | Status |
@@ -207,8 +190,6 @@ Total:   131                    Total:    ~0
 | CVE-2023-47359 | **9.8** | VLC 3.0.10 | Heap overflow RCE | ✅ Fixed |
 | CVE-2025-64459 | **9.1** | Django | SQL injection | ✅ Fixed |
 | CVE-2026-4277 | Critical | Django | Auth bypass (PoC public) | ✅ Fixed |
-
-> Full vulnerability lifecycle report: [`reports/vulnerability-management/`](reports/vulnerability-management/)
 
 ---
 
@@ -218,8 +199,7 @@ Total:   131                    Total:    ~0
 |---|---|
 | Version | 15.21 |
 | Config | SwiftOnSecurity schema 4.91 |
-| Status | ✅ Running |
-| Events in pipeline | ✅ Confirmed flowing to Wazuh |
+| Status | ✅ Running — events confirmed flowing to Wazuh |
 
 ### Key EventIDs Monitored
 
@@ -239,38 +219,71 @@ Total:   131                    Total:    ~0
 
 ### MITRE ATT&CK Detection Coverage Matrix
 
-| # | Technique | ID | Simulated | Detected | Log Source | Rule/EventID | Level | Status |
+| # | Technique | ID | Agent | Simulated | Detected | Rule | Level | Status |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Brute Force | T1110 | ✅ | ✅ | Security EID4625 | 60204 | 10 | ✅ **CONFIRMED** |
-| 2 | PowerShell Execution | T1059.001 | ✅ | ✅ | Win EID4104 + Sysmon EID1 | MITRE chart | High | ✅ **CONFIRMED** |
-| 3 | Scheduled Task | T1053.005 | ✅ | ✅ | TaskScheduler EID4698 + FIM Rule 750 | Sysmon EID1 + 750 | High | ✅ **CONFIRMED** |
-| 4 | Startup Persistence | T1547.001 | ✅ | ✅ | FIM realtime Rule 550 + Sysmon EID11 | 550, EID11/13 | 7 | ✅ **CONFIRMED** |
-| 5 | Registry Modification | T1112 | ✅ | ✅ | Wazuh registry monitor Rule 750 | 750 | 5 | ✅ **CONFIRMED** |
-| 6 | File Integrity | T1565 | ✅ | ✅ | FIM realtime Rule 550 | 550 | 7 | ✅ **CONFIRMED** |
-| 7 | Account Discovery | T1087 | ⬜ | ⬜ | Sysmon + Security | TBD | Low | ⬜ Planned |
-| 8 | Credential Dumping | T1003 | ⬜ | ⬜ | Sysmon EID10 | TBD | High | ⬜ Planned |
+| 1 | Brute Force (Windows) | T1110 | Khonshu | ✅ | ✅ | 60204 | 10 | ✅ **CONFIRMED** |
+| 2 | PowerShell Execution | T1059.001 | Khonshu | ✅ | ✅ | 100002 | 12 | ✅ **CONFIRMED** |
+| 3 | Scheduled Task | T1053.005 | Khonshu | ✅ | ✅ | 100001 | 12 | ✅ **CONFIRMED** |
+| 4 | Startup Persistence | T1547.001 | Khonshu | ✅ | ✅ | 100003 | 12 | ✅ **CONFIRMED** |
+| 5 | Registry Modification | T1112 | Khonshu | ✅ | ✅ | 750 | 5 | ✅ **CONFIRMED** |
+| 6 | File Integrity | T1565 | Khonshu | ✅ | ✅ | 550 | 7 | ✅ **CONFIRMED** |
+| 7 | SSH Brute Force (Linux) | T1110 | kali | ✅ | ✅ | **100004** | 12 | ✅ **CONFIRMED** |
+| 8 | Credential Dumping | T1003 | Khonshu | ⬜ | ⬜ | TBD | High | ⬜ Phase 4 |
+| 9 | C2 Beacon | T1071.001 | Both | ⬜ | ⬜ | TBD | High | ⬜ Phase 4 |
 
-**Confirmed: 6/8 techniques detected | Planned: 2**
+**Confirmed: 7/9 techniques detected**
 
-### Simulation Scripts
+### Simulation Tools Used
 
-| Script | Technique | Method | Status |
+| Tool | Target | Technique | Agent |
 |---|---|---|---|
-| [`scripts/sim-bruteforce.ps1`](scripts/sim-bruteforce.ps1) | T1110 | `net use \\localhost\IPC$` | ✅ Done |
-| [`scripts/sim-powershell.ps1`](scripts/sim-powershell.ps1) | T1059.001 | `-EncodedCommand` + `-ExecutionPolicy Bypass` | ✅ Done |
-| [`scripts/sim-persistence.ps1`](scripts/sim-persistence.ps1) | T1053.005 | `schtasks /create /ru SYSTEM /sc ONLOGON` | ✅ Done |
-| [`scripts/sim-startup.ps1`](scripts/sim-startup.ps1) | T1547.001 | Startup folder drop + Run key (dual vector) | ✅ Done |
+| `net use \\localhost\IPC$` | Windows logon | T1110 | Khonshu |
+| PowerShell `-EncodedCommand` | Script block logging | T1059.001 | Khonshu |
+| `schtasks /create /ru SYSTEM` | Task scheduler | T1053.005 | Khonshu |
+| Startup folder + Run key | Boot persistence | T1547.001 | Khonshu |
+| Hydra v9.6 + rockyou.txt | SSH service | T1110 | kali |
+
+---
+
+## 🔧 Module 6 — Custom Detection Rules
+
+File: [`config/local_rules.xml`](config/local_rules.xml)
+
+| Rule ID | Technique | Description | Level | Agent |
+|---|---|---|---|---|
+| 100001 | T1053.005 | Scheduled Task created via schtasks.exe | 12 | Khonshu |
+| 100002 | T1059.001 | Suspicious PowerShell script block execution | 12 | Khonshu |
+| 100003 | T1547.001 | Registry Run Key persistence detected | 12 | Khonshu |
+| 100004 | T1110 | SSH Brute Force on Linux endpoint | 12 | kali |
+
+All rules confirmed firing in Wazuh Threat Hunting dashboard.
+
+---
+
+## 🔍 Module 7 — Threat Hunting
+
+File: [`docs/threat-hunting.md`](docs/threat-hunting.md)
+
+| # | Hypothesis | Technique | Agent | Status |
+|---|---|---|---|---|
+| 1 | LOLBin abuse | T1218 | Khonshu | No hits — baseline established |
+| 2 | Registry autorun persistence | T1547.001 | Khonshu | ✅ Confirmed (IR-004) |
+| 3 | LSASS credential dump | T1003.001 | Khonshu | Planned — Phase 4 |
+| 4 | C2 outbound beacon | T1071.001 | Both | Planned — Phase 4 |
+| 5 | Execution from Temp dirs | T1059 | Khonshu | ✅ Confirmed (IR-002) |
+| 6 | SSH brute force | T1110 | kali | ✅ Confirmed (IR-005) |
 
 ---
 
 ## 📋 Incident Reports
 
-| ID | Date | Technique | MITRE ID | Rules Fired | Status |
-|---|---|---|---|---|---|
-| [IR-2026-09-12-001](incidents/IR-2026-09-12-001.md) | 2026-09-12 | Brute Force | T1110 | 60122, 60204 | ✅ Closed |
-| [IR-2026-09-13-002](incidents/IR-2026-09-13-002.md) | 2026-09-13 | PowerShell Execution | T1059.001 | EID4104 + Sysmon EID1 | ✅ Closed |
-| [IR-2026-09-19-003](incidents/IR-2026-09-19-003.md) | 2026-09-19 | Scheduled Task Persistence | T1053.005 | Sysmon EID1 + FIM 750 + EID4698 | ✅ Closed |
-| [IR-2026-09-19-004](incidents/IR-2026-09-19-004.md) | 2026-09-19 | Startup Folder Persistence | T1547.001 | FIM 550 + FIM 750 + Sysmon EID11/13 | ✅ Closed |
+| ID | Date | Technique | MITRE ID | Agent | Rules Fired | Status |
+|---|---|---|---|---|---|---|
+| [IR-001](incidents/IR-2026-09-12-001.md) | 2026-09-12 | Brute Force | T1110 | Khonshu | 60122, 60204 | ✅ Closed |
+| [IR-002](incidents/IR-2026-09-13-002.md) | 2026-09-13 | PowerShell Execution | T1059.001 | Khonshu | EID4104, Sysmon EID1 | ✅ Closed |
+| [IR-003](incidents/IR-2026-09-19-003.md) | 2026-09-19 | Scheduled Task | T1053.005 | Khonshu | Sysmon EID1, FIM 750, EID4698 | ✅ Closed |
+| [IR-004](incidents/IR-2026-09-19-004.md) | 2026-09-19 | Startup Persistence | T1547.001 | Khonshu | FIM 550, FIM 750, Sysmon EID11/13 | ✅ Closed |
+| [IR-005](incidents/IR-2026-09-24-005.md) | 2026-09-24 | SSH Brute Force | T1110 | kali | 5760, 5557, 2502, **100004** | ✅ Closed |
 
 ---
 
@@ -283,35 +296,38 @@ wazuh-soc-lab/
 ├── future.md                          ← Planned phases and expansion roadmap
 │
 ├── config/
-│   ├── ossec.conf                     ← Hardened agent config (live)
+│   ├── ossec.conf                     ← Hardened agent config (Khonshu)
+│   ├── local_rules.xml                ← Custom MITRE rules 100001–100004
 │   └── sysmon-config.xml              ← SwiftOnSecurity ruleset v4.91
 │
 ├── docs/
 │   ├── deployment.md                  ← Full reproduction guide + troubleshooting
 │   ├── vuln-management.md             ← CVE remediation summary
 │   ├── sca-report.md                  ← CIS Win11 benchmark results
+│   ├── threat-hunting.md              ← 6 threat hunting hypotheses (3 confirmed)
 │   └── github-setup.md                ← Git workflow and commit strategy
 │
 ├── reports/
 │   └── vulnerability-management/
-│       ├── initial-assessment.md      ← Baseline: 131 CVEs, severity breakdown
-│       ├── critical-findings.md       ← Deep-dive on Critical/High CVEs
-│       ├── remediation-log.md         ← Package-by-package remediation log
-│       ├── verification-results.md    ← Post-remediation rescan results
-│       └── final-assessment.md        ← Before/after comparison + metrics
+│       ├── initial-assessment.md
+│       ├── critical-findings.md
+│       ├── remediation-log.md
+│       ├── verification-results.md
+│       └── final-assessment.md
 │
 ├── scripts/
-│   ├── sim-bruteforce.ps1             ← T1110 simulation
+│   ├── sim-bruteforce.ps1             ← T1110 simulation (Windows)
 │   ├── sim-powershell.ps1             ← T1059.001 simulation
 │   ├── sim-persistence.ps1            ← T1053.005 simulation
 │   └── sim-startup.ps1                ← T1547.001 simulation
 │
 └── incidents/
-    ├── IR-TEMPLATE.md                 ← Standard IR template
-    ├── IR-2026-09-12-001.md           ← T1110 Brute Force ✅
+    ├── IR-TEMPLATE.md
+    ├── IR-2026-09-12-001.md           ← T1110 Brute Force (Windows) ✅
     ├── IR-2026-09-13-002.md           ← T1059.001 PowerShell ✅
     ├── IR-2026-09-19-003.md           ← T1053.005 Scheduled Task ✅
-    └── IR-2026-09-19-004.md           ← T1547.001 Startup Persistence ✅
+    ├── IR-2026-09-19-004.md           ← T1547.001 Startup Persistence ✅
+    └── IR-2026-09-24-005.md           ← T1110 SSH Brute Force (Linux) ✅
 ```
 
 ---
@@ -320,18 +336,20 @@ wazuh-soc-lab/
 
 | Metric | Value |
 |---|---|
-| Total alerts captured (24h) | **4,654** |
-| High-level alerts (Level 12+) | **25** |
-| Authentication failures logged | **10** |
-| MITRE techniques in dashboard | **9+** |
+| Total alerts captured (24h) | **4,654+** |
+| High-level alerts (Level 12+) | **32+** |
+| MITRE techniques simulated | **7** |
+| MITRE techniques confirmed | **7** |
+| Custom detection rules | **4** (100001–100004) |
+| Incident reports written | **5** |
 | CVEs discovered | **131** |
 | CVEs remediated | **128 (98.5%)** |
 | FIM realtime paths | **8** |
 | Registry keys monitored | **20+** |
-| MITRE techniques simulated | **6** |
-| MITRE techniques confirmed | **6** |
-| Incident reports written | **4** |
 | Sysmon event types active | **10** |
+| Threat hunting hypotheses | **6 (3 confirmed)** |
+| Agents enrolled | **2** (Khonshu + kali) |
+| SCA hits (Linux CIS) | **392** |
 
 ---
 
@@ -349,7 +367,7 @@ wazuh-soc-lab/
 - [x] SCA running — CIS Win11 Enterprise
 - [x] Sysmon 15.21 with SwiftOnSecurity config
 
-### 🔄 Phase 2 — Vulnerability Management
+### ✅ Phase 2 — Vulnerability Management
 - [x] 131 CVEs discovered and baselined
 - [x] Django 5.2.17 — 128 CVEs cleared
 - [x] VLC 3.0.23 — CVE-2023-47359 CVSS 9.8 cleared
@@ -357,35 +375,41 @@ wazuh-soc-lab/
 - [ ] WinRAR 7.x upgrade pending
 - [ ] Python 3.11.9 + 3.13.1 upgrades pending
 
-### ✅ Phase 3 — Attack Simulation
-- [x] T1110 Brute Force — confirmed ✅
-- [x] T1059.001 PowerShell — confirmed ✅
-- [x] T1547.001 Startup Persistence — confirmed ✅
-- [x] T1112 Registry Modification — confirmed ✅
-- [x] T1053.005 Scheduled Task — confirmed ✅
-- [x] IR-001 through IR-004 written and pushed ✅
+### ✅ Phase 3 — Linux Endpoint + Custom Rules
+- [x] Kali Linux enrolled as second agent (ID 004)
+- [x] auditd configured with MITRE-mapped rules
+- [x] rsyslog + auth.log capturing SSH failures
+- [x] SSH brute force simulated (Hydra v9.6, rockyou.txt)
+- [x] 644 alerts generated — rules 5557, 5760, 2502 confirmed
+- [x] Custom rule 100004 (T1110, Level 12) — 7 hits confirmed
+- [x] SCA auto-ran on Kali — 392 CIS Linux benchmark hits
+- [x] IR-005 written and pushed
+- [x] Custom rules 100001–100004 documented in local_rules.xml
+- [x] Threat hunting doc — 6 hypotheses, 3 confirmed
 
-### ⬜ Phase 4 — SOC Operations
-- [ ] 5 threat hunting hypotheses documented
-- [ ] Alert tuning and false positive testing
-- [ ] Custom Wazuh detection rules (`local_rules.xml`)
-- [ ] SCA detailed pass/fail breakdown
+### ⬜ Phase 4 — Advanced Detections
+- [ ] Wazuh Active Response — auto-block IPs on brute force
+- [ ] Metasploit C2 simulation — T1071.001 beacon detection
+- [ ] LSASS dump simulation — T1003.001 (Mimikatz on Khonshu)
+- [ ] Alert tuning and false positive reduction
+- [ ] Sigma rule engineering
 
 ### ⬜ Phase 5 — Enterprise Expansion
-- [ ] Linux endpoint (Ubuntu) added as second agent
-- [ ] Kali attacker VM — purple team scenarios
-- [ ] SSH brute force detection on Linux
-- [ ] Sigma rule detection engineering
+- [ ] Third agent — Ubuntu server
+- [ ] Network IDS integration (Suricata)
+- [ ] Log forwarding pipeline (Filebeat)
+- [ ] Wazuh API automation scripts
 
 ---
 
 ## 📚 References
 
 - [Wazuh Documentation](https://documentation.wazuh.com)
-- [MITRE ATT&CK for Windows](https://attack.mitre.org/matrices/enterprise/windows/)
+- [MITRE ATT&CK for Enterprise](https://attack.mitre.org/matrices/enterprise/)
 - [SwiftOnSecurity Sysmon Config](https://github.com/SwiftOnSecurity/sysmon-config)
-- [CIS Benchmarks — Windows 11](https://www.cisecurity.org/benchmark/microsoft_windows_desktop)
+- [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks)
 - [NVD — National Vulnerability Database](https://nvd.nist.gov/)
+- [Hydra — THC](https://github.com/vanhauser-thc/thc-hydra)
 
 ---
 
@@ -398,4 +422,4 @@ HackerOne: `on3_r4gn4r` | Bugcrowd: `r4gn4r`
 
 ---
 
-*Last updated: 2026-09-19 | Active Development*
+*Last updated: 2026-09-24 | Active Development*
