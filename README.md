@@ -7,11 +7,12 @@
 ![MITRE](https://img.shields.io/badge/MITRE_ATT%26CK-Mapped-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![CVEs](https://img.shields.io/badge/CVEs_Remediated-128+-critical?style=flat-square)
-![IRs](https://img.shields.io/badge/Incident_Reports-5-orange?style=flat-square)
+![IRs](https://img.shields.io/badge/Incident_Reports-6-orange?style=flat-square)
 ![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-7-red?style=flat-square)
 ![Custom Rules](https://img.shields.io/badge/Custom_Rules-4-blueviolet?style=flat-square)
+![Active Response](https://img.shields.io/badge/Active_Response-Enabled-brightgreen?style=flat-square)
 
-> End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, MITRE ATT&CK-mapped attack simulations across Windows 11 and Kali Linux endpoints, custom detection rules, threat hunting, and structured incident response documentation.
+> End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, MITRE ATT&CK-mapped attack simulations across Windows 11 and Kali Linux endpoints, custom detection rules, threat hunting, automated active response, and structured incident response documentation.
 
 ---
 
@@ -25,8 +26,9 @@ Build a simulated Security Operations environment capable of:
 - Vulnerability discovery, prioritization, and remediation (131 → ~0 CVEs)
 - Attack simulation across 7 MITRE techniques with live detection validation
 - Custom Wazuh detection rules mapped to MITRE ATT&CK (4 rules, 100001–100004)
+- Automated Active Response — `firewall-drop` auto-blocking attacker IPs on rule trigger
 - Proactive threat hunting with documented hypotheses (6 total, 3 confirmed)
-- Incident investigation and structured response documentation (5 IRs)
+- Incident investigation and structured response documentation (6 IRs)
 
 ---
 
@@ -275,6 +277,38 @@ File: [`docs/threat-hunting.md`](docs/threat-hunting.md)
 
 ---
 
+## 🤖 Module 8 — Active Response
+
+Wazuh Active Response automatically executes countermeasures when specific rules fire — no manual intervention required.
+
+| Parameter | Value |
+|---|---|
+| Command | `firewall-drop` |
+| Trigger Rule | 100004 (T1110 SSH Brute Force) |
+| Location | Local (executes on the agent) |
+| Timeout | 300 seconds (auto-unblock) |
+| Script | `/var/ossec/active-response/bin/firewall-drop` |
+
+### Confirmed Detection-to-Containment Chain
+
+```
+Hydra SSH brute force (10.252.134.161)
+  → /var/log/auth.log — PAM failures logged
+    → Wazuh agent (004/kali) — logcollector ships to manager
+      → Rule 5760 (Level 5)  — sshd: authentication failed
+      → Rule 5557 (Level 5)  — unix_chkpwd: password check failed
+      → Rule 2502 (Level 10) — user missed password repeatedly
+        → Rule 100004 (Level 12) — T1110 SSH Brute Force [CUSTOM]
+          → Active Response: firewall-drop TRIGGERED
+            → iptables DROP 10.252.134.161 — attacker blocked ✅
+```
+
+**Time from first failure to auto-block: ~1 second**
+
+> See [`incidents/IR-2026-09-25-006.md`](incidents/IR-2026-09-25-006.md) for full evidence and timeline.
+
+---
+
 ## 📋 Incident Reports
 
 | ID | Date | Technique | MITRE ID | Agent | Rules Fired | Status |
@@ -284,6 +318,7 @@ File: [`docs/threat-hunting.md`](docs/threat-hunting.md)
 | [IR-003](incidents/IR-2026-09-19-003.md) | 2026-09-19 | Scheduled Task | T1053.005 | Khonshu | Sysmon EID1, FIM 750, EID4698 | ✅ Closed |
 | [IR-004](incidents/IR-2026-09-19-004.md) | 2026-09-19 | Startup Persistence | T1547.001 | Khonshu | FIM 550, FIM 750, Sysmon EID11/13 | ✅ Closed |
 | [IR-005](incidents/IR-2026-09-24-005.md) | 2026-09-24 | SSH Brute Force | T1110 | kali | 5760, 5557, 2502, **100004** | ✅ Closed |
+| [IR-006](incidents/IR-2026-09-25-006.md) | 2026-09-25 | Active Response Auto-Block | T1110 | kali | 100004 → firewall-drop | ✅ Closed |
 
 ---
 
@@ -327,7 +362,8 @@ wazuh-soc-lab/
     ├── IR-2026-09-13-002.md           ← T1059.001 PowerShell ✅
     ├── IR-2026-09-19-003.md           ← T1053.005 Scheduled Task ✅
     ├── IR-2026-09-19-004.md           ← T1547.001 Startup Persistence ✅
-    └── IR-2026-09-24-005.md           ← T1110 SSH Brute Force (Linux) ✅
+    ├── IR-2026-09-24-005.md           ← T1110 SSH Brute Force (Linux) ✅
+    └── IR-2026-09-25-006.md           ← Active Response auto-block confirmed ✅
 ```
 
 ---
@@ -341,7 +377,9 @@ wazuh-soc-lab/
 | MITRE techniques simulated | **7** |
 | MITRE techniques confirmed | **7** |
 | Custom detection rules | **4** (100001–100004) |
-| Incident reports written | **5** |
+| Incident reports written | **6** |
+| Active Response rules | **1** (firewall-drop on rule 100004) |
+| Auto-block time (detection to block) | **~1 second** |
 | CVEs discovered | **131** |
 | CVEs remediated | **128 (98.5%)** |
 | FIM realtime paths | **8** |
@@ -387,10 +425,11 @@ wazuh-soc-lab/
 - [x] Custom rules 100001–100004 documented in local_rules.xml
 - [x] Threat hunting doc — 6 hypotheses, 3 confirmed
 
-### ⬜ Phase 4 — Advanced Detections
-- [ ] Wazuh Active Response — auto-block IPs on brute force
-- [ ] Metasploit C2 simulation — T1071.001 beacon detection
+### 🔄 Phase 4 — Advanced Detections
+- [x] Wazuh Active Response — `firewall-drop` auto-block on rule 100004 confirmed ✅
+- [x] IR-006 — Active Response auto-block documented and pushed ✅
 - [ ] LSASS dump simulation — T1003.001 (Mimikatz on Khonshu)
+- [ ] Metasploit C2 simulation — T1071.001 beacon detection
 - [ ] Alert tuning and false positive reduction
 - [ ] Sigma rule engineering
 
@@ -422,4 +461,4 @@ HackerOne: `on3_r4gn4r` | Bugcrowd: `r4gn4r`
 
 ---
 
-*Last updated: 2026-09-24 | Active Development*
+*Last updated: 2026-09-25 | Active Development*
