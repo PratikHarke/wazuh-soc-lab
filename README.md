@@ -2,14 +2,14 @@
 
 ![Wazuh](https://img.shields.io/badge/Wazuh-4.14.7-blue?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows_11-Agent_002-0078D6?style=flat-square)
-![Kali](https://img.shields.io/badge/Kali_Linux-Agent_004-557C94?style=flat-square)
+![Kali](https://img.shields.io/badge/Kali_Linux-Agent_005-557C94?style=flat-square)
 ![Sysmon](https://img.shields.io/badge/Sysmon-15.21-important?style=flat-square)
 ![MITRE](https://img.shields.io/badge/MITRE_ATT%26CK-Mapped-red?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![CVEs](https://img.shields.io/badge/CVEs_Remediated-131-critical?style=flat-square)
-![IRs](https://img.shields.io/badge/Incident_Reports-7-orange?style=flat-square)
-![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-7-red?style=flat-square)
-![Custom Rules](https://img.shields.io/badge/Custom_Rules-4-blueviolet?style=flat-square)
+![IRs](https://img.shields.io/badge/Incident_Reports-8-orange?style=flat-square)
+![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-8-red?style=flat-square)
+![Custom Rules](https://img.shields.io/badge/Custom_Rules-5-blueviolet?style=flat-square)
 ![Active Response](https://img.shields.io/badge/Active_Response-Enabled-brightgreen?style=flat-square)
 
 > End-to-end SOC simulation lab built on Wazuh — covering real-time endpoint monitoring, FIM, vulnerability management, CIS benchmarking, Sysmon telemetry, MITRE ATT&CK-mapped attack simulations across Windows 11 and Kali Linux endpoints, custom detection rules, threat hunting, automated active response, and structured incident response documentation.
@@ -24,11 +24,11 @@ Build a simulated Security Operations environment capable of:
 - File Integrity Monitoring with MITRE-mapped registry coverage
 - Security Configuration Assessment against CIS benchmarks (Windows 11 + Linux)
 - Vulnerability discovery, prioritization, and remediation (131 CVEs → 100% remediated)
-- Attack simulation across 7 MITRE techniques with live detection validation
-- Custom Wazuh detection rules mapped to MITRE ATT&CK (4 rules, 100001–100004)
+- Attack simulation across 8 MITRE techniques with live detection validation
+- Custom Wazuh detection rules mapped to MITRE ATT&CK (5 rules, 100001–100005)
 - Automated Active Response — `firewall-drop` auto-blocking attacker IPs on rule trigger
-- Proactive threat hunting with documented hypotheses (6 total, 3 confirmed)
-- Incident investigation and structured response documentation (7 IRs)
+- Proactive threat hunting with documented hypotheses (6 total, 4 confirmed)
+- Incident investigation and structured response documentation (8 IRs)
 
 ---
 
@@ -46,7 +46,7 @@ Build a simulated Security Operations environment capable of:
 │               │                  │    │               │                  │
 │  ┌────────────▼─────────────┐   │    │  ┌────────────▼─────────────┐   │
 │  │   Wazuh Agent v4.14.7    │   │    │  │   Wazuh Agent v4.14.7    │   │
-│  │   Agent ID: 002          │   │    │  │   Agent ID: 004          │   │
+│  │   Agent ID: 002          │   │    │  │   Agent ID: 005          │   │
 │  └────────────┬─────────────┘   │    │  └────────────┬─────────────┘   │
 └───────────────┼─────────────────┘    └───────────────┼─────────────────┘
                 │ TCP :1514 AES                         │ TCP :1514 AES
@@ -54,13 +54,15 @@ Build a simulated Security Operations environment capable of:
                         ┌───────────▼─────────────┐
                         │    Wazuh Server OVA      │
                         │    v4.14.7 — VirtualBox  │
-                        │    10.156.191.133 (static)│
+                        │    IP: dynamic (DHCP)*   │
                         │                           │
                         │  wazuh-manager  :55000    │
                         │  wazuh-indexer  :9200     │
                         │  wazuh-dashboard :443     │
                         └───────────────────────────┘
 ```
+
+> *Server IP is assigned dynamically per session by the home router (subnet varies). Static config is set via `/etc/systemd/network/20-eth0.network` and updated each session. See Session Startup Checklist below.
 
 ---
 
@@ -69,14 +71,14 @@ Build a simulated Security Operations environment capable of:
 | Component | Detail |
 |---|---|
 | **Wazuh Server** | OVA v4.14.7 on Oracle VirtualBox |
-| **Server IP** | 10.156.191.133 (static — systemd-networkd) |
+| **Server IP** | Dynamic (DHCP — updated each session via systemd-networkd) |
 | **Windows Endpoint** | Windows 11 Home — Hostname: `Khonshu` (Agent 002) |
-| **Linux Endpoint** | Kali Linux — Hostname: `kali` (Agent 004, IP: 10.156.191.161) |
+| **Linux Endpoint** | Kali Linux — Hostname: `kali` (Agent 005) |
 | **Communication** | TCP :1514, AES encrypted |
 | **Sysmon** | v15.21 — SwiftOnSecurity config (schema 4.50) |
 | **auditd** | v4.1.2 — custom rules for privilege escalation, passwd, sshd config |
 | **SCA Policies** | CIS Windows 11 Enterprise + CIS Distribution Independent Linux |
-| **Custom Rules** | 4 rules (100001–100004), all MITRE-mapped |
+| **Custom Rules** | 5 rules (100001–100005), all MITRE-mapped |
 
 ---
 
@@ -87,7 +89,7 @@ Build a simulated Security Operations environment capable of:
 | 1 | Agent "Never Connected" | Windows Firewall blocking TCP :1514 | Added outbound firewall rule |
 | 2 | `agent-auth.exe` not found | Agent installed to x86 path not x64 | Used `C:\Program Files (x86)\ossec-agent\agent-auth.exe` |
 | 3 | Incomplete MSI (5.9MB) | Broken download in TEMP | Re-downloaded via winget |
-| 4 | IP changed on every reboot | DHCP lease renewal | Configured static IP via systemd-networkd (`/etc/systemd/network/20-eth0.network`) |
+| 4 | IP changes each session | Home router assigns different subnet per session | Update systemd-networkd config + agent ossec.conf each session |
 | 5 | `systemctl` Access Denied | Running as `wazuh-user` not root | `sudo su -` before any service commands |
 | 6 | Sysmon binary not in PATH | winget installed launcher only | Direct download from sysinternals.com |
 | 7 | EventID 4625 not generated | Windows audit policy disabled by default | `auditpol /set /subcategory:"Logon" /failure:enable` |
@@ -97,23 +99,42 @@ Build a simulated Security Operations environment capable of:
 | 11 | ossec.conf corrupted | `sed` inserted literal `\n` breaking XML structure | Rewrote config from scratch using Python |
 | 12 | Kali no IPv4 (network unreachable) | Adapter set to plain NAT instead of Bridged | Changed to Bridged Adapter (MediaTek Wi-Fi 6 MT7921) |
 | 13 | auth.log missing on Kali | Kali uses journald only — no rsyslog by default | Installed rsyslog; created `/etc/rsyslog.d/50-auth.conf` |
+| 14 | Sysmon EID 3 not shipping to Wazuh | Agent bookmark advances past EID 3 during service restarts on private subnet | Avoid WazuhSvc restarts during active monitoring; documented in IR-008 |
 
 ### Session Startup Checklist
 
+```powershell
+# Step 1 — Find current subnet on Windows host
+(Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notlike "127*"}).IPAddress
+# Note the subnet (e.g. 10.71.19.x) — server will be .133, Kali will be .161
+```
+
 ```bash
-# SSH to Wazuh server
-ssh wazuh-user@10.156.191.133
+# Step 2 — Update server static IP in systemd-networkd
+sudo nano /etc/systemd/network/20-eth0.network
+# Change Address= and Gateway= to current subnet
+sudo systemctl restart systemd-networkd
+
+# Step 3 — Start Wazuh services
 sudo systemctl start wazuh-indexer wazuh-manager wazuh-dashboard
 sudo systemctl is-active wazuh-indexer wazuh-manager wazuh-dashboard
-
-# Verify agents
 sudo /var/ossec/bin/agent_control -l
 ```
 
 ```powershell
-# Admin PowerShell on Khonshu (every session)
-Start-Service WazuhSvc
-Get-Service WazuhSvc, sysmon64
+# Step 4 — Update Khonshu agent manager IP
+(Get-Content "C:\Program Files (x86)\ossec-agent\ossec.conf") `
+  -replace '<address>.*</address>', '<address>CURRENT_SERVER_IP</address>' | `
+  Set-Content "C:\Program Files (x86)\ossec-agent\ossec.conf"
+Stop-Service WazuhSvc -Force; Start-Service WazuhSvc
+```
+
+```bash
+# Step 5 — Update Kali agent manager IP and static IP
+sudo nmcli con mod "Wired connection 1" ipv4.addresses "SUBNET.161/24" ipv4.gateway "SUBNET.1"
+sudo nmcli con up "Wired connection 1"
+sudo sed -i 's|<address>.*</address>|<address>CURRENT_SERVER_IP</address>|' /var/ossec/etc/ossec.conf
+sudo systemctl restart wazuh-agent
 ```
 
 ---
@@ -258,11 +279,13 @@ Total:   131                    Total:     0
 | 5 | Registry Modification | T1112 | Khonshu | ✅ | ✅ | 750 | 5 | ✅ **CONFIRMED** |
 | 6 | SSH Brute Force (Linux) | T1110 | kali | ✅ | ✅ | 100004 | 12 | ✅ **CONFIRMED** |
 | 7 | LSASS Credential Dump | T1003.001 | Khonshu | ✅ | 🛡️ | — | — | 🛡️ **BLOCKED** |
-| 8 | C2 Beacon | T1071.001 | Both | ⬜ | ⬜ | TBD | High | ⬜ Phase 5 |
+| 8 | C2 Beacon (Meterpreter) | T1071.001 | Both | ✅ | ✅ | 92213, 92052, 92031 | **15** | ✅ **CONFIRMED** |
 
-**Confirmed: 6/8 detected | 1/8 attempted — blocked by OS defenses | 1/8 planned**
+**Confirmed: 7/8 techniques detected | 1/8 attempted — blocked by OS defenses**
 
 > **Note on T1003.001:** Five LSASS dump methods attempted (comsvcs MiniDump, Task Manager, procdump64, createdump, SYSTEM-level schtasks). All blocked by PPL, Microsoft Defender, and WDAC. Sysmon EID 10 was not generated — OS terminated OpenProcess() before Sysmon could hook it. See [IR-007](incidents/IR-2026-09-26-007.md).
+
+> **Note on T1071.001:** Built-in rule 92213 (Level 15) fired on payload drop before C2 connection established. Full kill chain detected including payload staging, abnormal process execution, and post-exploitation discovery. Custom rule 100005 validated via wazuh-logtest. Sysmon EID 3 shipping gap documented — see [IR-008](incidents/IR-2026-09-27-008.md).
 
 ### Simulation Tools Used
 
@@ -274,6 +297,7 @@ Total:   131                    Total:     0
 | Startup folder + Run key | Boot persistence | T1547.001 | Khonshu |
 | Hydra v9.6 + rockyou.txt | SSH service | T1110 | kali |
 | comsvcs MiniDump, procdump64, createdump | LSASS memory | T1003.001 | Khonshu |
+| msfvenom + Metasploit multi/handler | Reverse TCP C2 | T1071.001 | Khonshu ← kali |
 
 ---
 
@@ -287,8 +311,9 @@ File: [`config/local_rules.xml`](config/local_rules.xml)
 | 100002 | T1059.001 | Suspicious PowerShell script block execution | 12 | Khonshu |
 | 100003 | T1547.001 | Registry Run Key persistence detected | 12 | Khonshu |
 | 100004 | T1110 | SSH Brute Force on Linux endpoint | 12 | kali |
+| 100005 | T1071.001 | Suspected C2 outbound connection on port 4444 | 14 | Khonshu |
 
-All rules confirmed firing in Wazuh Threat Hunting dashboard.
+All rules confirmed via Wazuh Threat Hunting dashboard or wazuh-logtest.
 
 ---
 
@@ -301,7 +326,7 @@ File: [`docs/threat-hunting.md`](docs/threat-hunting.md)
 | 1 | LOLBin abuse | T1218 | Khonshu | No hits — baseline established |
 | 2 | Registry autorun persistence | T1547.001 | Khonshu | ✅ Confirmed (IR-004) |
 | 3 | LSASS credential dump | T1003.001 | Khonshu | 🛡️ Attempted — all methods blocked by OS defenses (IR-007) |
-| 4 | C2 outbound beacon | T1071.001 | Both | ⬜ Planned — Phase 5 |
+| 4 | C2 outbound beacon | T1071.001 | Both | ✅ Confirmed (IR-008) |
 | 5 | Execution from Temp dirs | T1059 | Khonshu | ✅ Confirmed (IR-002) |
 | 6 | SSH brute force | T1110 | kali | ✅ Confirmed (IR-005) |
 
@@ -324,7 +349,7 @@ Wazuh Active Response automatically executes countermeasures when specific rules
 ```
 Hydra SSH brute force (attacker IP)
   → /var/log/auth.log — PAM failures logged
-    → Wazuh agent (004/kali) — logcollector ships to manager
+    → Wazuh agent (005/kali) — logcollector ships to manager
       → Rule 5760 (Level 5)  — sshd: authentication failed
       → Rule 5557 (Level 5)  — unix_chkpwd: password check failed
       → Rule 2502 (Level 10) — user missed password repeatedly
@@ -350,6 +375,7 @@ Hydra SSH brute force (attacker IP)
 | [IR-005](incidents/IR-2026-09-24-005.md) | 2026-09-24 | SSH Brute Force | T1110 | kali | 5760, 5557, 2502, 100004 | ✅ Closed |
 | [IR-006](incidents/IR-2026-09-25-006.md) | 2026-09-25 | Active Response Auto-Block | T1110 | kali | 100004 → firewall-drop | ✅ Closed |
 | [IR-007](incidents/IR-2026-09-26-007.md) | 2026-09-26 | LSASS Dump — Blocked | T1003.001 | Khonshu | All methods blocked by PPL/Defender/WDAC | ✅ Closed |
+| [IR-008](incidents/IR-2026-09-27-008.md) | 2026-09-27 | Meterpreter C2 Beacon | T1071.001 | Khonshu/kali | 92213 (L15), 92052, 92031, FIM 550 | ✅ Closed |
 
 ---
 
@@ -363,14 +389,14 @@ wazuh-soc-lab/
 │
 ├── config/
 │   ├── ossec.conf                     ← Hardened agent config (Khonshu)
-│   ├── local_rules.xml                ← Custom MITRE rules 100001–100004
+│   ├── local_rules.xml                ← Custom MITRE rules 100001–100005
 │   └── sysmon-config.xml              ← SwiftOnSecurity ruleset (schema 4.50)
 │
 ├── docs/
 │   ├── deployment.md                  ← Full reproduction guide + troubleshooting
 │   ├── vuln-management.md             ← CVE remediation summary (131 → 0)
 │   ├── sca-report.md                  ← CIS benchmark results
-│   ├── threat-hunting.md              ← 6 threat hunting hypotheses (3 confirmed)
+│   ├── threat-hunting.md              ← 6 threat hunting hypotheses (4 confirmed)
 │   └── github-setup.md                ← Git workflow and commit strategy
 │
 ├── scripts/
@@ -387,7 +413,8 @@ wazuh-soc-lab/
     ├── IR-2026-09-19-004.md           ← T1547.001 Startup Persistence ✅
     ├── IR-2026-09-24-005.md           ← T1110 SSH Brute Force (Linux) ✅
     ├── IR-2026-09-25-006.md           ← Active Response auto-block confirmed ✅
-    └── IR-2026-09-26-007.md           ← T1003.001 LSASS — all methods blocked ✅
+    ├── IR-2026-09-26-007.md           ← T1003.001 LSASS — all methods blocked ✅
+    └── IR-2026-09-27-008.md           ← T1071.001 Meterpreter C2 — Level 15 detected ✅
 ```
 
 ---
@@ -398,10 +425,11 @@ wazuh-soc-lab/
 |---|---|
 | Total alerts captured (24h) | **4,654+** |
 | High-level alerts (Level 12+) | **32+** |
-| MITRE techniques simulated | **7** |
-| MITRE techniques confirmed | **6 detected + 1 blocked** |
-| Custom detection rules | **4** (100001–100004) |
-| Incident reports written | **7** |
+| Max alert level reached | **Level 15** (C2 payload staging — rule 92213) |
+| MITRE techniques simulated | **8** |
+| MITRE techniques confirmed | **7 detected + 1 blocked by OS defenses** |
+| Custom detection rules | **5** (100001–100005) |
+| Incident reports written | **8** |
 | Active Response rules | **1** (firewall-drop on rule 100004) |
 | Auto-block time (detection to block) | **~1 second** |
 | CVEs discovered | **131** |
@@ -409,7 +437,7 @@ wazuh-soc-lab/
 | FIM realtime paths | **8** |
 | Registry keys monitored | **20+** |
 | Sysmon event types active | **10** |
-| Threat hunting hypotheses | **6 (3 confirmed, 1 blocked)** |
+| Threat hunting hypotheses | **6 (4 confirmed, 1 blocked)** |
 | Agents enrolled | **2** (Khonshu + kali) |
 | SCA hits (Linux CIS) | **392** |
 
@@ -438,7 +466,7 @@ wazuh-soc-lab/
 - [x] 131/131 CVEs remediated (100%)
 
 ### ✅ Phase 3 — Linux Endpoint + Custom Rules
-- [x] Kali Linux enrolled as second agent (ID 004)
+- [x] Kali Linux enrolled as second agent (ID 005)
 - [x] auditd configured with MITRE-mapped rules
 - [x] rsyslog + auth.log capturing SSH failures
 - [x] SSH brute force simulated (Hydra v9.6, rockyou.txt)
@@ -454,12 +482,20 @@ wazuh-soc-lab/
 - [x] IR-006 — Active Response auto-block documented
 - [x] T1003.001 LSASS dump — 5 methods attempted, all blocked by PPL/Defender/WDAC
 - [x] IR-007 — LSASS attempt and OS defense coverage documented
-- [x] Static IP configured via systemd-networkd (permanent fix)
 
-### ⬜ Phase 5 — Enterprise Expansion
-- [ ] Metasploit C2 simulation — T1071.001 beacon detection
+### ✅ Phase 5 — C2 Simulation + Detection Engineering
+- [x] Metasploit Meterpreter payload generated (windows/x64/meterpreter/reverse_tcp)
+- [x] Payload delivered via HTTP and executed on Khonshu — reverse shell established
+- [x] Full kill chain detected: payload staging (L15), abnormal execution, discovery activity
+- [x] Post-exploitation: discovery commands (net user, ipconfig) detected via EID 1
+- [x] Custom rule 100005 (T1071.001, Level 14) written and validated via wazuh-logtest
+- [x] Sysmon EID 3 shipping gap identified and documented as detection finding
+- [x] IR-008 — Meterpreter C2 full kill chain documented
+
+### ⬜ Phase 6 — Detection Maturity
+- [ ] Sigma rules for 100001–100005 (portable detection logic)
 - [ ] Alert tuning and false positive reduction
-- [ ] Sigma rule engineering
+- [ ] Host-Only VirtualBox adapter — permanent IP fix (192.168.56.x)
 - [ ] Third agent — Ubuntu server
 - [ ] Network IDS integration (Suricata)
 
@@ -473,6 +509,7 @@ wazuh-soc-lab/
 - [CIS Benchmarks](https://www.cisecurity.org/cis-benchmarks)
 - [NVD — National Vulnerability Database](https://nvd.nist.gov/)
 - [Hydra — THC](https://github.com/vanhauser-thc/thc-hydra)
+- [Metasploit Framework](https://github.com/rapid7/metasploit-framework)
 
 ---
 
@@ -485,4 +522,4 @@ HackerOne: `on3_r4gn4r` | Bugcrowd: `r4gn4r`
 
 ---
 
-*Last updated: 2026-09-26 | Active Development*
+*Last updated: 2026-09-27 | Active Development*
