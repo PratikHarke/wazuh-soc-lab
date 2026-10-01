@@ -474,7 +474,7 @@ wazuh-soc-lab/
 - [x] Custom rule 100004 (T1110, Level 12) — confirmed
 - [x] SCA auto-ran on Kali — 392 CIS Linux benchmark hits
 - [x] Custom rules 100001–100004 documented in local_rules.xml
-- [x] Threat hunting doc — 6 hypotheses, 3 confirmed
+- [x] Threat hunting doc — 6 hypotheses documented (see Module 7)
 - [x] IR-003, IR-004, IR-005 written and pushed
 
 ### ✅ Phase 4 — Active Response + Advanced Simulations
