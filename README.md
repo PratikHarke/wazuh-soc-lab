@@ -8,7 +8,7 @@
 ![Status](https://img.shields.io/badge/Status-Active-success?style=flat-square)
 ![CVEs](https://img.shields.io/badge/CVEs_Remediated-131-critical?style=flat-square)
 ![IRs](https://img.shields.io/badge/Incident_Reports-8-orange?style=flat-square)
-![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-8-red?style=flat-square)
+![MITRE Detections](https://img.shields.io/badge/MITRE_Detections-7_detected,_1_blocked-red?style=flat-square)
 ![Custom Rules](https://img.shields.io/badge/Custom_Rules-5-blueviolet?style=flat-square)
 ![Active Response](https://img.shields.io/badge/Active_Response-Enabled-brightgreen?style=flat-square)
 
@@ -248,9 +248,9 @@ Total:   131                    Total:     0
 
 | Item | Detail |
 |---|---|
-| Version | 15.21 |
+| Version | 15.21 (binary schema 4.91) |
 | Config | SwiftOnSecurity (schema 4.50) |
-| Status | ✅ Running — events confirmed flowing to Wazuh |
+| Status | ✅ Running — EID 3 logged locally (6,118 events); Wazuh shipping gap under investigation (IR-008) |
 
 ### Key EventIDs Monitored
 
@@ -283,7 +283,7 @@ Total:   131                    Total:     0
 
 **Confirmed: 7/8 techniques detected | 1/8 attempted — blocked by OS defenses**
 
-> **Note on T1003.001:** Five LSASS dump methods attempted (comsvcs MiniDump, Task Manager, procdump64, createdump, SYSTEM-level schtasks). All blocked by PPL, Microsoft Defender, and WDAC. Sysmon EID 10 was not generated — OS terminated OpenProcess() before Sysmon could hook it. See [IR-007](incidents/IR-2026-09-26-007.md).
+> **Note on T1003.001:** Five LSASS dump methods attempted (comsvcs MiniDump, Task Manager, procdump64, createdump, SYSTEM-level schtasks). All blocked by PPL, Microsoft Defender, and WDAC. Sysmon EID 10 was not generated — ProcessAccess logging was not enabled in the Sysmon config, so EID 10 could not be generated; the attempts themselves were blocked by the OS defenses. See [IR-007](incidents/IR-2026-09-26-007.md).
 
 > **Note on T1071.001:** Built-in rule 92213 (Level 15) fired on payload drop before C2 connection established. Full kill chain detected including payload staging, abnormal process execution, and post-exploitation discovery. Custom rule 100005 validated via wazuh-logtest. Sysmon EID 3 shipping gap documented — see [IR-008](incidents/IR-2026-09-27-008.md).
 
@@ -426,7 +426,7 @@ wazuh-soc-lab/
 | Total alerts captured (24h) | **4,654+** |
 | High-level alerts (Level 12+) | **32+** |
 | Max alert level reached | **Level 15** (C2 payload staging — rule 92213) |
-| MITRE techniques simulated | **8** |
+| MITRE techniques simulated | **8 simulations (7 unique techniques)** |
 | MITRE techniques confirmed | **7 detected + 1 blocked by OS defenses** |
 | Custom detection rules | **5** (100001–100005) |
 | Incident reports written | **8** |
@@ -436,7 +436,7 @@ wazuh-soc-lab/
 | CVEs remediated | **131 (100%)** |
 | FIM realtime paths | **8** |
 | Registry keys monitored | **20+** |
-| Sysmon event types active | **10** |
+| Sysmon event types observed | **12** |
 | Threat hunting hypotheses | **6 (4 confirmed, 1 blocked)** |
 | Agents enrolled | **2** (Khonshu + kali) |
 | SCA hits (Linux CIS) | **392** |
