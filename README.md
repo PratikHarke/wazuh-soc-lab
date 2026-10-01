@@ -24,7 +24,7 @@ Build a simulated Security Operations environment capable of:
 - File Integrity Monitoring with MITRE-mapped registry coverage
 - Security Configuration Assessment against CIS benchmarks (Windows 11 + Linux)
 - Vulnerability discovery, prioritization, and remediation (131 CVEs → 100% remediated)
-- Attack simulation across 8 MITRE techniques with live detection validation
+- 8 attack simulations across 7 MITRE techniques with live detection validation
 - Custom Wazuh detection rules mapped to MITRE ATT&CK (5 rules, 100001–100005)
 - Automated Active Response — `firewall-drop` auto-blocking attacker IPs on rule trigger
 - Proactive threat hunting with documented hypotheses (6 total, 4 confirmed)
@@ -258,8 +258,8 @@ Total:   131                    Total:     0
 |---|---|---|
 | 1 | Process Create | Malware execution, LOLBins |
 | 3 | Network Connection | C2 callbacks |
-| 7 | Image Loaded | DLL hijacking |
-| 10 | ProcessAccess | Credential dumping |
+| 7 | Image Loaded | DLL hijacking (configured, no rules enabled) |
+| 10 | ProcessAccess | Credential dumping (configured, no rules enabled) |
 | 11 | FileCreate | Dropper detection |
 | 12/13 | RegistryEvent | Persistence |
 | 22 | DNS Query | C2 / tunneling |
@@ -283,7 +283,7 @@ Total:   131                    Total:     0
 
 **Confirmed: 7/8 techniques detected | 1/8 attempted — blocked by OS defenses**
 
-> **Note on T1003.001:** Five LSASS dump methods attempted (comsvcs MiniDump, Task Manager, procdump64, createdump, SYSTEM-level schtasks). All blocked by PPL, Microsoft Defender, and WDAC. Sysmon EID 10 was not generated — ProcessAccess logging was not enabled in the Sysmon config, so EID 10 could not be generated; the attempts themselves were blocked by the OS defenses. See [IR-007](incidents/IR-2026-09-26-007.md).
+> **Note on T1003.001:** Five LSASS dump methods attempted (comsvcs MiniDump, Task Manager, procdump64, createdump, SYSTEM-level schtasks). All blocked by PPL, Microsoft Defender, and WDAC. Sysmon EID 10 was not generated — ProcessAccess logging was not enabled in the Sysmon config (the include block is empty). See [IR-007](incidents/IR-2026-09-26-007.md).
 
 > **Note on T1071.001:** Built-in rule 92213 (Level 15) fired on payload drop before C2 connection established. Full kill chain detected including payload staging, abnormal process execution, and post-exploitation discovery. Custom rule 100005 validated via wazuh-logtest. Sysmon EID 3 shipping gap documented — see [IR-008](incidents/IR-2026-09-27-008.md).
 
